@@ -52,6 +52,14 @@ function readPngDimensions(buf: Buffer): { width: number; height: number } {
   if (buf.toString("ascii", 12, 16) !== "IHDR") {
     throw new Error("entry.png has no IHDR chunk where one is expected");
   }
+  // IHDR data: width (4), height (4), bit depth (1), colour type (1).
+  // This image is 8-bit truecolour (depth 8, type 2); anything else here
+  // would mean the file is not the invitation the author approved.
+  const bitDepth = buf.readUInt8(24);
+  const colourType = buf.readUInt8(25);
+  if (bitDepth !== 8 || colourType !== 2) {
+    throw new Error(`entry.png IHDR is bit depth ${bitDepth}, colour type ${colourType}, expected 8/2`);
+  }
   return {
     width: buf.readUInt32BE(16),
     height: buf.readUInt32BE(20),
